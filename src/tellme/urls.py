@@ -14,4 +14,8 @@ urlpatterns = [
     path("item/<int:id>/", views.UpdateItem.as_view(), name="UpdateItem"),
     path("item/remove/", views.DeleteItem.as_view(), name="DeleteItem"),
     path("item/<int:id>", views.RetrieveCategoryItems.as_view(), name="RetrieveCategoryItems"),
+    path("item/guess/<int:id>", views.RetrieveItemToGuess.as_view(), name="RetrieveItemToGuess"),
+
+    path("score/", views.SubmitScore.as_view(), name="SubmitScore"),
+    path("scores", views.ListScores.as_view(), name="ListScores"),
 ]

@@ -107,6 +107,7 @@ class AccountTestCase(APITestCase):
             'name': 'Manila',
             'category': req1.json()['id']
         }, format='json')
+
         req = self.client.post('/api/item/', {
             'name': 'Davao',
             'category': req1.json()['id']
@@ -116,3 +117,39 @@ class AccountTestCase(APITestCase):
 
         req = self.client.get('/api/item/{}'.format(req1.json()['id']))
         self.assertEqual(req.status_code, status.HTTP_200_OK)
+
+    def testRetrieveItemToGuess(self):
+        req1 = self.client.post('/api/category/', {
+            'name': 'Places',
+        }, format='json')
+        self.assertEqual(req1.status_code, status.HTTP_201_CREATED)
+
+        self.client.post('/api/item/', {
+            'name': 'Manila',
+            'category': req1.json()['id']
+        }, format='json')
+
+        req = self.client.post('/api/item/', {
+            'name': 'Davao',
+            'category': req1.json()['id']
+        }, format='json')
+        self.assertEqual(req.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(req.json()['category'], req1.json()['id'])
+
+        req = self.client.get('/api/item/guess/{}'.format(req1.json()['id']))
+        self.assertEqual(req.status_code, status.HTTP_200_OK)
+
+    def testSubmitScore(self):
+        req1 = self.client.post('/api/category/', {
+            'name': 'Places',
+        }, format='json')
+        self.assertEqual(req1.status_code, status.HTTP_201_CREATED)
+
+        req = self.client.post('/api/score/', {
+            'category': req1.json()['id'],
+            'name': 'JAB',
+            'time': 10,
+            'answer': 'Dog'
+        }, format='json')
+        print(req.json())
+        self.assertEqual(req1.status_code, status.HTTP_201_CREATED)

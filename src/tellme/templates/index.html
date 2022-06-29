@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body class="font-nunito antialiased bg-gray-100 text-gray-900 my-16 flex items-center justify-center">
 
@@ -17,16 +18,22 @@
                     @click.prevent="togglePlay()"
                     class="text-gray-600 py-4 px-6 block hover:text-blue-500 focus:outline-none "
                     :class="{'text-blue-500 border-b-2 font-medium border-blue-500' : isPlay == true}"
+
             >
                 Play Game
             </button>
             <button @click.prevent="toggleCategory()"
+                    x-show="isGameStart == false"
                     class="text-gray-600 py-4 px-6 block hover:text-blue-500 focus:outline-none"
                     :class="{'text-blue-500 border-b-2 font-medium border-blue-500' : isCategory == true}"
             >
                 Settings
             </button>
-            <button class="text-gray-600 py-4 px-6 block hover:text-blue-500 focus:outline-none">
+            <button
+                    @click.prevent="toggleScoreBoard()"
+                    class="text-gray-600 py-4 px-6 block hover:text-blue-500 focus:outline-none"
+                    :class="{'text-blue-500 border-b-2 font-medium border-blue-500' : isScore == true}"
+                    x-show="isGameStart == false">
                 Score Board
             </button>
         </nav>
@@ -34,20 +41,27 @@
 
     <div class="main-title my-8">
 
-        <h1 class="font-bold text-2xl text-center" x-show="isPlay">Select Category</h1>
-        <h1 class="font-bold text-2xl text-center" x-show="isCategory">Add Category</h1>
+        <h1 class="font-bold text-2xl text-center"
+            x-show="((isPlay && isPlayMode == false) && isFreeStyle == false)  && isGameStart == false">Select
+            Category</h1>
+        <h1 class="font-bold text-2xl text-center"
+            x-show="((isPlayMode == true && isPlay == true) && isFreeStyle == false)  && isGameStart == false">Select
+            Mode</h1>
+        <h1 class="font-bold text-2xl text-center" x-show="isCategory">Settings</h1>
+        <h1 class="font-bold text-2xl text-center" x-show="isScore">Score Board</h1>
     </div>
 
     <div class="main-question mb-8 flex flex-col divide-y text-gray-800 text-base">
-        <div x-show="isPlay" x-data="items">
-            <template x-for="color in colors">
+        <div x-show="((isPlay && isPlayMode == false) && isFreeStyle == false)  && isGameStart == false">
+            <template x-for="cat in categories">
                 <div class="item px-6 py-6" x-data="{isOpen : false}">
                     <div class="flex flex-row gap-4">
-                        <input type="radio" class="text-base bg-transparent focus:outline-none mt-1">
+                        <input type="radio" class="text-base bg-transparent focus:outline-none mt-1" name="cat"
+                               :value="cat.id" x-model="gameCategoryID">
                         <a href="#" class="flex items-center justify-between" @click.prevent="isOpen = true">
-                            <h4 :class="{'text-blue-600 font-bold' : isOpen == true}">Popular articles</h4>
+                            <h4 :class="{'text-blue-600 font-bold' : isOpen == true}" x-text="cat.name"></h4>
                             <svg
-                                    class="w-5 h-5 text-gray-500"
+                                    class="w-5 h-5 ml-96 text-gray-500"
                                     fill="none" stroke-linecap="round"
                                     stroke-linejoin="round" stroke-width="2"
                                     viewBox="0 0 24 24" stroke="currentColor">
@@ -56,138 +70,706 @@
                         </a>
                     </div>
 
-
-                    <div x-show="isOpen" @click.away="isOpen = false" class="mt-3"
-                         :class="{'text-gray-600' : isOpen == true}">
-                        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Placeat, ex. Expedita sunt enim, vel
-                        amet
-                        cumque nulla illum harum. Similique!
+                    <div x-show="isOpen" @click.away="isOpen = false" class="mt-3 flex flex-col gap-4">
+                        <div :class="{'text-gray-600' : isOpen == true}" x-text="cat.description"></div>
+                        <button type="button"
+                                data-modal-toggle="defaultModal"
+                                @click.prevent="toggleEditItemModal(cat)"
+                                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                            Edit
+                        </button>
+                        <button type="button"
+                                data-modal-toggle="defaultModal"
+                                @click.prevent="toggleDeleteModal(cat.id)"
+                                class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                            Delete
+                        </button>
                     </div>
                 </div>
             </template>
         </div>
+        <div x-show="((isPlayMode == true && isPlay == true) && isFreeStyle == false)  && isGameStart == false">
+            <div class="item px-6 py-6" x-data="{isOpen : false}">
 
+                <div class="mt-3 flex flex-col gap-4">
+                    <button type="button"
+                            data-modal-toggle="defaultModal"
+                            @click.prevent="toggleClassic()"
+                            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                        Start
+                    </button>
+                    <button type="button"
+                            data-modal-toggle="defaultModal"
+                            @click.prevent="toggleFreeStyle()"
+                            class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                        Start Freestyle
+                    </button>
+                </div>
+            </div>
+        </div>
         <div x-show="isCategory">
-            <form class="mt-5">
-                <div class="mb-6">
-                    <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Category
-                        Name</label>
-                    <input type="text" id="name"
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                           required>
-                </div>
-                <div class="mb-6">
-                    <label for="description" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Category
-                        Description</label>
-                    <input type="text" id="description"
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                           required>
-                </div>
-                <button type="submit"
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                    Submit
-                </button>
+            <form class="mt-5" onsubmit="void(0)">
 
-                <button type="button"
-                        data-modal-toggle="defaultModal"
-                        @click.prevent="toggleItemModal()"
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                    View Items
-                </button>
+                <div class="mb-6">
+                    <label for="timelimit"
+                           class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Duration
+                        (seconds)</label>
+                    <input type="number" id="timelimit" x-model="timer"
+                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                           required>
+                </div>
+
+
+                <div class="mb-6">
+                    <label for="teamName"
+                           class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Team Name</label>
+                    <input type="text" id="teamName" x-model="teamName"
+                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                           required>
+                </div>
             </form>
         </div>
+        <div x-show="isGameStart && gameEnd == false">
+            <form class="mt-5" onsubmit="void(0)">
+
+                <div class="mt-5">
+                    <h1 class="font-bold text-2xl text-center" x-text="toGuess"></h1>
+                </div>
 
 
+                <div class="mt-20">
+                    <h1 class="font-bold text-9xl text-center" x-text="toGuess"></h1>
+                </div>
+
+                <div class="mt-20">
+                    <h1 x-text="realTimer" class="font-bold text-2xl text-center"></h1>
+                </div>
+
+                <div class="mt-20" x-show="successGuess">
+                    <h1 class="font-bold text-2xl text-center">Time Taken: <span x-text="stats.time"></span></h1>
+                </div>
+
+                <div class="mt-5" x-show="successGuess">
+                    <h1 class="font-bold text-2xl text-center">Team Name: <span x-text="stats.team"></span></h1>
+                </div>
+
+                <!--                <div class="mt-5">-->
+                <!--                    <h1  class="font-bold text-2xl text-center" x-text="isFreeStyle ? 'MODE: FREE STYLE' : 'MODE: CLASSIC'"></h1>-->
+                <!--                </div>-->
+                <!--                <div class="mt-5" x-show="isFreeStyle == false">-->
+                <!--                    <h1  class="font-bold text-2xl text-center" >CATEGORY: <span x-text="gameCategory"></span></h1>-->
+                <!--                </div>-->
+
+                <!--                <div class="mt-5">-->
+                <!--                    <input type="text" style="height: 220px; font-size: 200px;" x-model="currentGuess"  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>-->
+                <!--                </div>-->
+
+
+            </form>
+            <button
+                    @click.prevent="submitScore()"
+                    x-show="successGuess"
+                    class="p-2 pl-5 pr-5 mt-5 transition-colors w-full duration-700 transform bg-indigo-500 hover:bg-blue-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
+                Submit & Close
+            </button>
+            <button
+                    @click.prevent="toggleSuccess()"
+                    x-show="successGuess == false"
+                    class="p-2 pl-5 pr-5 mt-5 transition-colors w-full duration-700 transform bg-indigo-500 hover:bg-blue-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
+                STOP
+            </button>
+
+        </div>
+        <div x-show="gameEnd">
+            <form class="mt-5" onsubmit="void(0)">
+                <div class="mt-32" style="height: 200px;">
+                    <h1 class="font-bold text-2xl text-center" style="font-size: 200px;">GAME</h1>
+                </div>
+                <div class="mt-5" style="height: 200px;">
+                    <h1 class="font-bold text-2xl text-center" style="font-size: 200px;">OVER</h1>
+                </div>
+            </form>
+        </div>
+        <div x-show="isScore">
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">
+                            Player/Team Name
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Time Taken
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            answer
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Date
+                        </th>
+
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="score in scores">
+                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                            <th scope="row"
+                                class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap" x-text="score.name">
+                            </th>
+                            <td class="px-6 py-4" x-text="score.time">
+
+                            </td>
+                            <td class="px-6 py-4" x-text="score.answer">
+
+                            </td>
+                            <td class="px-6 py-4" x-text="score.date_created">
+                            </td>
+                        </tr>
+                    </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <div class="text-center" x-show="isPlay">
-        <button class="p-2 pl-5 pr-5 transition-colors duration-700 transform bg-indigo-500 hover:bg-blue-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
+    <div class="text-center" x-show="((isPlay && isPlayMode == false) && isFreeStyle == false) && isGameStart == false">
+        <button
+                @click="toggleGameStart()"
+                class="p-2 pl-5 pr-5 transition-colors duration-700 transform bg-indigo-500 hover:bg-blue-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
             START
         </button>
+        <button @click="toggleAddItemModal()"
+                class="p-2 pl-5 pr-5 transition-colors duration-700 transform bg-green-500 hover:bg-green-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
+            Add Category
+        </button>
     </div>
-<div class="relative z-10" x-show="itemShow" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-  <!--
-    Background backdrop, show/hide based on modal state.
+    <div class="relative z-10" x-show="addItemShow" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!--
+          Background backdrop, show/hide based on modal state.
 
-    Entering: "ease-out duration-300"
-      From: "opacity-0"
-      To: "opacity-100"
-    Leaving: "ease-in duration-200"
-      From: "opacity-100"
-      To: "opacity-0"
-  -->
-  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+          Entering: "ease-out duration-300"
+            From: "opacity-0"
+            To: "opacity-100"
+          Leaving: "ease-in duration-200"
+            From: "opacity-100"
+            To: "opacity-0"
+        -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
 
-  <div class="fixed z-10 inset-0 overflow-y-auto">
-    <div class="flex items-end sm:items-center justify-center min-h-full p-4 text-center sm:p-0">
-      <!--
-        Modal panel, show/hide based on modal state.
+        <div class="fixed z-10 inset-0 overflow-y-auto">
+            <div class="flex items-end sm:items-center justify-center min-h-full p-4 text-center sm:p-0">
+                <!--
+                  Modal panel, show/hide based on modal state.
 
-        Entering: "ease-out duration-300"
-          From: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-          To: "opacity-100 translate-y-0 sm:scale-100"
-        Leaving: "ease-in duration-200"
-          From: "opacity-100 translate-y-0 sm:scale-100"
-          To: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-      -->
-      <div class="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-              <!-- Heroicon name: outline/exclamation -->
-              <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+                  Entering: "ease-out duration-300"
+                    From: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    To: "opacity-100 translate-y-0 sm:scale-100"
+                  Leaving: "ease-in duration-200"
+                    From: "opacity-100 translate-y-0 sm:scale-100"
+                    To: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                -->
+                <div class="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <!-- Heroicon name: outline/exclamation -->
+                                <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                     viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-add">Add
+                                    Category</h3>
+                            </div>
+                        </div>
+
+                        <form class="mt-5" onsubmit="void(0)">
+                            <div class="mb-6">
+                                <label for="name"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Category
+                                    Name</label>
+                                <input type="text" id="name" x-model="categoryName"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       required>
+                            </div>
+                            <div class="mb-6">
+                                <label for="description"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Category
+                                    Description</label>
+                                <input type="text" id="description"
+                                       x-model="categoryDescription"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       required>
+                            </div>
+
+
+                        </form>
+                    </div>
+
+
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button" @click.prevent="toggleAddItemModal()"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                @click.prevent="insertCategories()"
+                                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                            Submit
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Deactivate account</h3>
-              <div class="mt-2">
-                <p class="text-sm text-gray-500">Are you sure you want to deactivate your account? All of your data will be permanently removed. This action cannot be undone.</p>
-              </div>
-            </div>
-          </div>
         </div>
-        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button" @click.prevent="toggleItemModal()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">Deactivate</button>
-          <button type="button" @click.prevent="toggleItemModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Cancel</button>
-        </div>
-      </div>
     </div>
-  </div>
-</div>
-</div>
+    <div class="relative z-10" x-show="deleteShow" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!--
+          Background backdrop, show/hide based on modal state.
+
+          Entering: "ease-out duration-300"
+            From: "opacity-0"
+            To: "opacity-100"
+          Leaving: "ease-in duration-200"
+            From: "opacity-100"
+            To: "opacity-0"
+        -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+        <div class="fixed z-10 inset-0 overflow-y-auto">
+            <div class="flex items-end sm:items-center justify-center min-h-full p-4 text-center sm:p-0">
+                <!--
+                  Modal panel, show/hide based on modal state.
+
+                  Entering: "ease-out duration-300"
+                    From: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    To: "opacity-100 translate-y-0 sm:scale-100"
+                  Leaving: "ease-in duration-200"
+                    From: "opacity-100 translate-y-0 sm:scale-100"
+                    To: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                -->
+                <div class="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <!-- Heroicon name: outline/exclamation -->
+                                <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                     viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-delete">Delete</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500">Are you sure you want to Delete this Category?</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button" @click.prevent="deleteCategory()"
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Delete
+                        </button>
+                        <button type="button" @click.prevent="toggleDeleteModal()"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="relative z-10" x-show="editItemShow" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+        <div class="fixed z-10 inset-0 overflow-y-auto">
+            <div class="flex items-end sm:items-center justify-center min-h-full p-4 text-center sm:p-0">
+
+                <div class="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8  w-1/2">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                     viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-items-title">
+                                    Category</h3>
+                            </div>
 
 
+                        </div>
+                        <form class="mt-5" onsubmit="void(0)">
+                            <div class="mb-6">
+                                <label for="edname"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Category
+                                    Name</label>
+                                <input type="text" id="edname" x-model="selectedCategory.name"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       required>
+                            </div>
+                            <div class="mb-6">
+                                <label for="eddescription"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Category
+                                    Description</label>
+                                <input type="text" id="eddescription"
+                                       x-model="selectedCategory.description"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       required>
+                            </div>
+
+
+                        </form>
+                        <h5>Items</h5>
+                        <form class="mt-5" onsubmit="void(0)">
+                            <div class="mb-6">
+                                <label for="edname"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Item
+                                    Name</label>
+                                <input type="text" id="itemname" x-model="itemName"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       required>
+                            </div>
+                            <div class="mb-6">
+                                <button type="submit"
+                                        @click.prevent="insertItem()"
+                                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                    Add
+                                </button>
+                            </div>
+
+
+                        </form>
+                        <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-5">
+                            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">
+                                        Name
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                        <span class="sr-only">Delete</span>
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <template x-for="catItem in categoryItems">
+                                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                        <th scope="row"
+                                            class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap"
+                                            x-text="catItem.name">
+
+                                        </th>
+
+                                        <td class="px-6 py-4 text-right">
+                                            <a href="#"
+                                               @click.prevent="deleteItem(catItem.id)"
+                                               class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Delete</a>
+                                        </td>
+                                    </tr>
+                                </template>
+
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button" @click.prevent="toggleEditItemModal({})"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                @click.prevent="updateCategory()"
+                                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script>
 <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('items', () => ({
-            colors: ['Red', 'Orange', 'Yellow'],
-        }))
 
         Alpine.data('navigation', () => ({
+            categories: [],
+            categoryName: null,
+            gameCategory: null,
+            gameCategoryID: 0,
+            isScore: false,
+            gameMode: null,
+            categoryDescription: null,
             isPlay: true,
             isCategory: false,
-            itemShow: false,
+            editItemShow: false,
+            deleteShow: false,
+            selectedCategory: {},
+            addItemShow: false,
+            toDelete: null,
+            itemName: null,
+            isPlayMode: true,
+            isFreeStyle: false,
+            isGameStart: false,
+            gameEnd: false,
+            categoryItems: [],
+            timer: 60,
+            timerCopy: 0,
+            realTimer: '00:00:00',
+            interval: null,
+            toGuess: null,
+            successGuess: false,
+            teamName: 'KungFu Panda',
+            stats: {time: -1, team: null, item: null},
+            scores: [],
 
             togglePlay() {
                 if (this.isPlay === false) {
                     this.isPlay = !this.isPlay
-                    this.isCategory = !this.isCategory
-                    this.itemShow = false
+                    this.isCategory = false
+                    this.isScore = false
+                    this.editItemShow = false
                 }
             },
 
             toggleCategory() {
                 if (this.isCategory === false) {
-                    this.isPlay = !this.isPlay
+                    this.isPlay = false
                     this.isCategory = !this.isCategory
-                    this.itemShow = false
+                    this.isScore = false
+                    this.editItemShow = false
                 }
             },
 
-            toggleItemModal(){
-                this.itemShow = !this.itemShow
-            }
+            toggleScoreBoard() {
+                if (this.isScore === false) {
+                    const self = this
+                    this.isPlay = false
+                    this.isCategory = false
+                    this.isScore = !this.isScore
+                    this.editItemShow = false
+                    axios.get(`/api/scores`).then((r) => {
+                        Array.prototype.splice.apply(self.scores, [0, self.scores.length].concat(r.data))
+                    }).catch((e) => {
+                        console.log(e);
+                    })
+                }
+            },
+
+            toggleSuccess() {
+                clearInterval(this.interval)
+                this.successGuess = true
+                console.log(this.timer, this.timerCopy)
+                Object.assign(this.stats, {time: this.timer - this.timerCopy, team: this.teamName, item: this.toGuess})
+            },
+
+            submitScore() {
+                const self = this
+                axios.post('/api/score/', {
+                    'name': this.teamName,
+                    'time': self.stats.time,
+                    'answer': this.toGuess
+                }).then(function (response) {
+                    self.toggleReset()
+                }).catch(function (error) {
+                    console.log(error)
+                });
+            },
+
+            toggleReset() {
+                this.categoryName = null
+                this.gameCategory = null
+                this.gameCategoryID = 0
+                this.gameMode = null
+                this.categoryDescription = null
+                this.isPlay = true
+                this.isCategory = false
+                this.editItemShow = false
+                this.deleteShow = false
+                this.addItemShow = false
+                this.toDelete = null
+                this.itemName = null
+                this.isPlayMode = true
+                this.isFreeStyle = false
+                this.isGameStart = false
+                this.gameEnd = false
+                this.toGuess = null
+                this.successGuess = false
+                this.timerCopy = 0
+                this.realTimer = '00:00:00'
+                Object.assign(this.stats, {time: -1, team: null, item: null})
+            },
+            toggleEditItemModal(cat = {}) {
+                this.selectedCategory = JSON.parse(JSON.stringify(cat))
+                this.getItem(this.selectedCategory.id)
+                this.editItemShow = !this.editItemShow
+            },
+
+            toggleAddItemModal() {
+                this.addItemShow = !this.addItemShow
+            },
+            toggleDeleteModal(id = null) {
+                this.deleteShow = !this.deleteShow
+                this.toDelete = id
+            },
+            toggleClassic() {
+                this.isPlayMode = !this.isPlayMode
+            },
+            toggleFreeStyle() {
+                this.isFreeStyle = !this.isFreeStyle
+                this.isPlayMode = !this.isPlayMode
+                this.toggleGameStart()
+            },
+
+            toggleGameStart() {
+                const self = this
+                axios.get(`/api/item/guess/${parseInt(self.gameCategoryID)}`).then((r) => {
+                    self.toGuess = r.data.name
+                }).catch((e) => {
+                    console.log(e);
+                })
+
+                let timerCopy = this.timer
+                this.isGameStart = !this.isGameStart
+                this.interval = setInterval(() => {
+                    if (timerCopy <= 0) {
+                        clearInterval(self.interval)
+                        self.gameEnd = true
+                    } else {
+                        self.realTimer = new Date(timerCopy * 1000).toISOString().substr(11, 8)
+                        timerCopy--
+
+                        self.timerCopy = timerCopy
+                    }
+
+                }, 1000)
+
+                if (this.isFreeStyle === false) {
+                    let item = self.categories.find(cat => cat.id === parseInt(self.gameCategoryID))
+                    self.gameCategory = item.name
+                }
+
+
+            },
+            deleteCategory() {
+                const self = this
+                console.log(this.toDelete)
+                if (this.toDelete !== null) {
+                    axios.delete(`/api/category/remove/`, {
+                        data: {
+                            id: this.toDelete,
+                        }
+                    }).then(function (response) {
+                        let item = self.categories.findIndex(cat => cat.id === response.data.id)
+                        self.categories.splice(item, 1)
+                        alert("Category Deleted")
+
+                    }).catch(function (error) {
+                        alert("Something Went Wrong")
+                        console.log(error);
+                    });
+                }
+                self.toggleDeleteModal()
+            },
+            insertCategories() {
+                const self = this
+
+                axios.post('/api/category/', {
+                    name: this.categoryName,
+                    description: this.categoryDescription
+                }).then(function (response) {
+                    self.categories.push(response.data)
+                    self.categoryDescription = null
+                    self.categoryName = null
+                    alert("Category Added")
+                }).catch(function (error) {
+                    alert("Something Went Wrong")
+                    console.log(error);
+                });
+
+                this.toggleAddItemModal()
+            },
+            getItem(id) {
+                const self = this
+                axios.get(`/api/item/${id}`).then((r) => {
+                    console.log(r)
+                    Array.prototype.splice.apply(self.categoryItems, [0, self.categoryItems.length].concat(r.data))
+                }).catch((e) => {
+                    console.log(e);
+                })
+            },
+            insertItem() {
+                if (this.itemName == null) {
+                    alert("Item Name Cannot be blank")
+                } else {
+                    const self = this
+                    axios.post(`/api/item/`, {
+                        category: this.selectedCategory.id,
+                        name: this.itemName
+                    }).then(function (response) {
+                        self.categoryItems.push(response.data)
+                        alert("Item Inserted")
+                    }).catch(function (error) {
+                        alert("Something Went Wrong")
+                        console.log(error);
+                    });
+                }
+
+            },
+            deleteItem(id) {
+                const self = this
+                if (id !== null) {
+                    axios.delete(`/api/item/remove/`, {
+                        data: {
+                            id: id,
+                        }
+                    }).then(function (response) {
+                        let item = self.categoryItems.findIndex(catitem => catitem.id === response.data.id)
+                        self.categoryItems.splice(item, 1)
+                        alert("Item Deleted")
+                    }).catch(function (error) {
+                        alert("Something Went Wrong")
+                        console.log(error);
+                    });
+                }
+            },
+            updateCategory() {
+                const self = this
+                axios.patch(`/api/category/${this.selectedCategory.id}/`, {
+                    name: this.selectedCategory.name,
+                    description: this.selectedCategory.description
+                }).then(function (response) {
+                    console.log(response)
+                    let item = self.categories.find(cat => cat.id === response.data.id)
+                    Object.assign(item, response.data)
+                    self.selectedCategory = {}
+                    self.itemShow = !self.itemShow
+                    alert("Category Updated")
+                }).catch(function (error) {
+                    alert("Something Went Wrong")
+                    console.log(error);
+                });
+
+                self.toggleEditItemModal()
+            },
+            init() {
+                const self = this
+                axios.get('/api/categories').then((r) => {
+                    Array.prototype.splice.apply(self.categories, [0, self.categories.length].concat(r.data))
+                }).catch((e) => {
+                    console.log(e);
+                })
+            },
         }))
     })
 
