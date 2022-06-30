@@ -4,6 +4,7 @@ from django.db.models.manager import Manager
 class Category(models.Model):
     name = models.CharField(max_length=50, null=False, blank=False, help_text="Category Name")
     description = models.TextField(null=True, blank=True)
+    image_link = models.TextField(default='https://images.unsplash.com/photo-1618022325802-7e5e732d97a1?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=748&q=80', blank=True)
     objects = Manager()
 
     def __str__(self):

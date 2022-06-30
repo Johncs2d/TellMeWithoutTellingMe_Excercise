@@ -10,6 +10,7 @@ class CategorySerializer(serializers.ModelSerializer):
             'id',
             'name',
             'description',
+            'image_link',
         ]
         extra_kwargs = {
             'id': {'read_only': True},

@@ -41,9 +41,9 @@
 
     <div class="main-title my-8">
 
-        <h1 class="font-bold text-2xl text-center"
-            x-show="((isPlay && isPlayMode == false) && isFreeStyle == false)  && isGameStart == false">Select
-            Category</h1>
+        <!--        <h1 class="font-bold text-2xl text-center"-->
+        <!--            x-show="((isPlay && isPlayMode == false) && isFreeStyle == false)  && isGameStart == false">Select-->
+        <!--            Category</h1>-->
         <h1 class="font-bold text-2xl text-center"
             x-show="((isPlayMode == true && isPlay == true) && isFreeStyle == false)  && isGameStart == false">Select
             Mode</h1>
@@ -53,28 +53,131 @@
 
     <div class="main-question mb-8 flex flex-col divide-y text-gray-800 text-base">
         <div x-show="((isPlay && isPlayMode == false) && isFreeStyle == false)  && isGameStart == false">
-            <template x-for="cat in categories">
-                <div class="item px-6 py-6" x-data="{isOpen : false}">
-                    <div class="flex flex-row gap-4">
-                        <input type="radio" class="text-base bg-transparent focus:outline-none mt-1" name="cat"
-                               :value="cat.id" x-model="gameCategoryID">
-                        <a href="#" class="flex items-center justify-between" @click.prevent="isOpen = true">
-                            <h4 :class="{'text-blue-600 font-bold' : isOpen == true}" x-text="cat.name"></h4>
-                            <svg
-                                    class="w-5 h-5 ml-96 text-gray-500"
-                                    fill="none" stroke-linecap="round"
-                                    stroke-linejoin="round" stroke-width="2"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                <path d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </a>
-                    </div>
 
-                    <div x-show="isOpen" @click.away="isOpen = false" class="mt-3">
-                        <div :class="{'text-gray-600' : isOpen == true}" x-text="cat.description"></div>
+            <div class="w-96 mb-36 item px-6 py-6" style="scroll-snap-type: x mandatory;">
+                <!-- first -->
+                <template x-for="(value, index) in categories">
+                    <div class="">
+                        <template x-if="index == '0'">
+                            <input class="sr-only peer" type="radio" name="carousel" :id="'carousel-'+index" checked/>
+                        </template>
+                        <template x-if="index != '0'">
+                            <input class="sr-only peer" type="radio" name="carousel" :id="'carousel-'+index"/>
+                        </template>
+                        <!-- content #1 -->
+                        <div
+                                class="w-96 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg transition-all duration-300 opacity-0 peer-checked:opacity-100 peer-checked:z-10 z-0">
+                            <img class="rounded-t-lg w-96 h-64"
+                                 :src="value.image_link"
+                                 alt=""/>
+                            <div class="py-4 px-8">
+                                <h1 class="hover:cursor-pointer mt-2 text-gray-900 font-bold text-2xl tracking-tight"
+                                    x-text="value.name">
+                                </h1>
+                                <p class="hover:cursor-pointer py-3 text-gray-600 leading-6" x-text="value.description">
+                                </p>
+
+                            </div>
+
+                            <div class="py-4 px-8">
+                                <button
+                                        @click="toggleGameStart(parseInt(index+1))"
+                                        class="p-2 pl-5 pr-5 transition-colors duration-700 transform bg-indigo-500 hover:bg-blue-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
+                                    START
+                                </button>
+                            </div>
+                            <!-- controls -->
+                            <div class="absolute top-1/2 w-full flex justify-between z-20">
+                                <template x-if="index == '0'">
+
+
+                                    <label :for="'carousel-' + (categories.length - 1)"
+                                           class="inline-block text-red-600 cursor-pointer -translate-x-5 bg-white rounded-full shadow-md active:translate-y-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20"
+                                             fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z"
+                                                  clip-rule="evenodd"/>
+                                        </svg>
+                                    </label>
+
+                                </template>
+                                <template x-if="index == '0'">
+                                    <label :for="'carousel-'+ (parseInt(index) + 1)"
+                                           class="inline-block text-red-600 cursor-pointer translate-x-5 bg-white rounded-full shadow-md active:translate-y-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20"
+                                             fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
+                                                  clip-rule="evenodd"/>
+                                        </svg>
+                                    </label>
+                                </template>
+                                <template x-if="index != '0' ">
+                                    <label :for="'carousel-' + (parseInt(index) - 1)"
+                                           class="inline-block text-red-600 cursor-pointer -translate-x-5 bg-white rounded-full shadow-md active:translate-y-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20"
+                                             fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z"
+                                                  clip-rule="evenodd"/>
+                                        </svg>
+                                    </label>
+
+                                </template>
+                                <template x-if="index != '0' && (categories.length - 1) != index">
+
+                                    <label :for="'carousel-'+ (parseInt(index) + 1)"
+                                           class="inline-block text-red-600 cursor-pointer translate-x-5 bg-white rounded-full shadow-md active:translate-y-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20"
+                                             fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
+                                                  clip-rule="evenodd"/>
+                                        </svg>
+                                    </label>
+                                </template>
+
+                                <template x-if="index != '0' && (categories.length - 1) == index">
+
+                                    <label :for="'carousel-'+ 0"
+                                           class="inline-block text-red-600 cursor-pointer translate-x-5 bg-white rounded-full shadow-md active:translate-y-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20"
+                                             fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
+                                                  clip-rule="evenodd"/>
+                                        </svg>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </template>
+                </template>
+            </div>
+
+            <!--            <template x-for="cat in categories">-->
+            <!--                <div class="item px-6 py-6" x-data="{isOpen : false}">-->
+            <!--                    <div class="flex flex-row gap-4">-->
+            <!--                        <input type="radio" class="text-base bg-transparent focus:outline-none mt-1" name="cat"-->
+            <!--                               :value="cat.id" x-model="gameCategoryID">-->
+            <!--                        <a href="#" class="flex items-center justify-between" @click.prevent="isOpen = true">-->
+            <!--                            <h4 :class="{'text-blue-600 font-bold' : isOpen == true}" x-text="cat.name"></h4>-->
+            <!--                            <svg-->
+            <!--                                    class="w-5 h-5 ml-96 text-gray-500"-->
+            <!--                                    fill="none" stroke-linecap="round"-->
+            <!--                                    stroke-linejoin="round" stroke-width="2"-->
+            <!--                                    viewBox="0 0 24 24" stroke="currentColor">-->
+            <!--                                <path d="M19 9l-7 7-7-7"></path>-->
+            <!--                            </svg>-->
+            <!--                        </a>-->
+            <!--                    </div>-->
+
+            <!--                    <div x-show="isOpen" @click.away="isOpen = false" class="mt-3">-->
+            <!--                        <div :class="{'text-gray-600' : isOpen == true}" x-text="cat.description"></div>-->
+            <!--                    </div>-->
+            <!--                </div>-->
+            <!--            </template>-->
         </div>
         <div x-show="((isPlayMode == true && isPlay == true) && isFreeStyle == false)  && isGameStart == false">
             <div class="item px-6 py-6" x-data="{isOpen : false}">
@@ -90,7 +193,7 @@
                             data-modal-toggle="defaultModal"
                             @click.prevent="toggleFreeStyle()"
                             class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                        Start Freestyle
+                        Start Random
                     </button>
                 </div>
             </div>
@@ -273,12 +376,9 @@
         </div>
     </div>
 
-    <div class="text-center" x-show="((isPlay && isPlayMode == false) && isFreeStyle == false) && isGameStart == false">
-        <button
-                @click="toggleGameStart()"
-                class="p-2 pl-5 pr-5 transition-colors duration-700 transform bg-indigo-500 hover:bg-blue-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
-            START
-        </button>
+    <div class="text-center mt-64"
+         x-show="((isPlay && isPlayMode == false) && isFreeStyle == false) && isGameStart == false">
+
         <button
                 @click="toggleReset()"
                 class="p-2 pl-5 pr-5 transition-colors duration-700 transform bg-red-500 hover:bg-red-400 text-gray-100 text-lg rounded-lg focus:border-4 border-red-300">
@@ -345,7 +445,15 @@
                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                        required>
                             </div>
-
+<div class="mb-6">
+                                <label for="image_link"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Category
+                                    Image Link</label>
+                                <input type="text" id="image_link"
+                                       x-model="categoryImageLink"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       required>
+                            </div>
 
                         </form>
                     </div>
@@ -466,7 +574,15 @@
                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                        required>
                             </div>
-
+                            <div class="mb-6">
+                                <label for="edimage_link"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Category
+                                    Image Link</label>
+                                <input type="text" id="edimage_link"
+                                       x-model="selectedCategory.image_link"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       required>
+                            </div>
 
                         </form>
                         <h5>Items</h5>
@@ -546,7 +662,7 @@
 
         Alpine.data('navigation', () => ({
             categories: [],
-            modes: ['Show Don’t Tell', 'One Syllable'],
+            modes: ['Show Don’t Tell', 'One Syllable', 'Freestyle'],
             currentMode: null,
             categoryName: null,
             gameCategory: null,
@@ -554,6 +670,7 @@
             isScore: false,
             gameMode: null,
             categoryDescription: null,
+            categoryImageLink: null,
             isPlay: true,
             isCategory: false,
             editItemShow: false,
@@ -613,8 +730,8 @@
             },
 
             toggleSuccess() {
-                clearInterval(this.interval)
                 this.successGuess = true
+                clearInterval(this.interval)
                 console.log(this.timer, this.timerCopy)
                 Object.assign(this.stats, {
                     time: this.timer - this.timerCopy,
@@ -684,13 +801,13 @@
                 this.toggleGameStart()
             },
 
-            toggleGameStart() {
+            toggleGameStart(id = 0) {
                 const self = this
-                axios.get(`/api/item/guess/${parseInt(self.gameCategoryID)}`).then((r) => {
+                axios.get(`/api/item/guess/${parseInt(id)}`).then((r) => {
                     Array.prototype.splice.apply(self.itemsToGuess, [0, self.itemsToGuess.length].concat(r.data))
                     if (self.itemsToGuess.length > 0) {
                         self.toGuess = self.itemsToGuess[0].name
-                        this.currentMode = this.modes[Math.floor(Math.random() * 2)]
+                        this.currentMode = this.modes[Math.floor(Math.random() * 3)]
                     }
                 }).catch((e) => {
                     console.log(e);
@@ -718,7 +835,7 @@
             toggleNext() {
                 this.currentIndex++
                 if (this.currentIndex <= this.itemsToGuess.length - 1) {
-                    this.currentMode = this.modes[Math.floor(Math.random() * 2)]
+                    this.currentMode = this.modes[Math.floor(Math.random() * 3)]
                     this.toGuess = this.itemsToGuess[this.currentIndex].name
                 } else {
                     this.toggleSuccess()
@@ -749,11 +866,13 @@
 
                 axios.post('/api/category/', {
                     name: this.categoryName,
-                    description: this.categoryDescription
+                    description: this.categoryDescription,
+                    image_link: this.categoryImageLink
                 }).then(function (response) {
                     self.categories.push(response.data)
                     self.categoryDescription = null
                     self.categoryName = null
+                    self.categoryImageLink = null
                     alert("Category Added")
                 }).catch(function (error) {
                     alert("Something Went Wrong")
@@ -781,6 +900,7 @@
                         name: this.itemName
                     }).then(function (response) {
                         self.categoryItems.push(response.data)
+                        self.itemName = null
                         alert("Item Inserted")
                     }).catch(function (error) {
                         alert("Something Went Wrong")
@@ -810,7 +930,8 @@
                 const self = this
                 axios.patch(`/api/category/${this.selectedCategory.id}/`, {
                     name: this.selectedCategory.name,
-                    description: this.selectedCategory.description
+                    description: this.selectedCategory.description,
+                    image_link: this.selectedCategory.image_link
                 }).then(function (response) {
                     console.log(response)
                     let item = self.categories.find(cat => cat.id === response.data.id)
