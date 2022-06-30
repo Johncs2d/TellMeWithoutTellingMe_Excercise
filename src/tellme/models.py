@@ -18,7 +18,7 @@ class Item(models.Model):
 class Score(models.Model):
     name = models.CharField(max_length=50, null=False, blank=False, help_text="Player/Team Name")
     time = models.DurationField(null=True, blank=True, help_text="Game Duration")
+    score = models.IntegerField(default=0, blank=True)
     category = models.ForeignKey(to=Category, on_delete=models.SET_NULL, blank=True, null=True, help_text="Category Selected")
-    answer = models.CharField(max_length=50, null=True, blank=True, help_text="Player Answer")
     date_created = models.DateTimeField(auto_now_add=True, editable=False)
     objects = Manager()

@@ -70,20 +70,8 @@
                         </a>
                     </div>
 
-                    <div x-show="isOpen" @click.away="isOpen = false" class="mt-3 flex flex-col gap-4">
+                    <div x-show="isOpen" @click.away="isOpen = false" class="mt-3">
                         <div :class="{'text-gray-600' : isOpen == true}" x-text="cat.description"></div>
-                        <button type="button"
-                                data-modal-toggle="defaultModal"
-                                @click.prevent="toggleEditItemModal(cat)"
-                                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                            Edit
-                        </button>
-                        <button type="button"
-                                data-modal-toggle="defaultModal"
-                                @click.prevent="toggleDeleteModal(cat.id)"
-                                class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                            Delete
-                        </button>
                     </div>
                 </div>
             </template>
@@ -127,6 +115,56 @@
                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                            required>
                 </div>
+
+                <div class="mb-6">
+                    <button @click.prevent="toggleAddItemModal()"
+                            class="p-2 pl-5 pr-5 w-full transition-colors duration-700 transform bg-green-500 hover:bg-green-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
+                        Add Category
+                    </button>
+                </div>
+                <div class="mb-6"><h1>Items & Categories</h1></div>
+                <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-5">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">
+                                Name
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                <span class="sr-only">Edit</span>
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                <span class="sr-only">Delete</span>
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <template x-for="cat in categories">
+                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                <th scope="row"
+                                    class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap"
+                                    x-text="cat.name">
+
+                                </th>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="#"
+                                       data-modal-toggle="defaultModal"
+                                       @click.prevent="toggleEditItemModal(cat)"
+                                       class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="#"
+                                       data-modal-toggle="defaultModal"
+                                       @click.prevent="toggleDeleteModal(cat.id)"
+                                       class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Delete</a>
+                                </td>
+                            </tr>
+                        </template>
+
+
+                        </tbody>
+                    </table>
+                </div>
             </form>
         </div>
         <div x-show="isGameStart && gameEnd == false">
@@ -145,6 +183,10 @@
                     <h1 x-text="realTimer" class="font-bold text-2xl text-center"></h1>
                 </div>
 
+                <div class="mt-20">
+                    <h1 class="font-bold text-4xl text-center" x-text="currentMode"></h1>
+                </div>
+
                 <div class="mt-20" x-show="successGuess">
                     <h1 class="font-bold text-2xl text-center">Time Taken: <span x-text="stats.time"></span></h1>
                 </div>
@@ -153,17 +195,9 @@
                     <h1 class="font-bold text-2xl text-center">Team Name: <span x-text="stats.team"></span></h1>
                 </div>
 
-                <!--                <div class="mt-5">-->
-                <!--                    <h1  class="font-bold text-2xl text-center" x-text="isFreeStyle ? 'MODE: FREE STYLE' : 'MODE: CLASSIC'"></h1>-->
-                <!--                </div>-->
-                <!--                <div class="mt-5" x-show="isFreeStyle == false">-->
-                <!--                    <h1  class="font-bold text-2xl text-center" >CATEGORY: <span x-text="gameCategory"></span></h1>-->
-                <!--                </div>-->
-
-                <!--                <div class="mt-5">-->
-                <!--                    <input type="text" style="height: 220px; font-size: 200px;" x-model="currentGuess"  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>-->
-                <!--                </div>-->
-
+                <div class="mt-5" x-show="successGuess">
+                    <h1 class="font-bold text-2xl text-center">Score: <span x-text="stats.score"></span></h1>
+                </div>
 
             </form>
             <button
@@ -173,10 +207,16 @@
                 Submit & Close
             </button>
             <button
-                    @click.prevent="toggleSuccess()"
+                    @click.prevent="toggleNext()"
                     x-show="successGuess == false"
                     class="p-2 pl-5 pr-5 mt-5 transition-colors w-full duration-700 transform bg-indigo-500 hover:bg-blue-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
-                STOP
+                Next
+            </button>
+            <button
+                    @click="toggleReset()"
+                    x-show="successGuess == false"
+                    class="p-2 pl-5 pr-5 transition-colors w-full mt-5 duration-700 transform bg-red-500 hover:bg-red-400 text-gray-100 text-lg rounded-lg focus:border-4 border-red-300">
+                Back
             </button>
 
         </div>
@@ -202,7 +242,7 @@
                             Time Taken
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            answer
+                            Score
                         </th>
                         <th scope="col" class="px-6 py-3">
                             Date
@@ -214,12 +254,13 @@
                     <template x-for="score in scores">
                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                             <th scope="row"
-                                class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap" x-text="score.name">
+                                class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap"
+                                x-text="score.name">
                             </th>
                             <td class="px-6 py-4" x-text="score.time">
 
                             </td>
-                            <td class="px-6 py-4" x-text="score.answer">
+                            <td class="px-6 py-4" x-text="score.score">
 
                             </td>
                             <td class="px-6 py-4" x-text="score.date_created">
@@ -238,9 +279,10 @@
                 class="p-2 pl-5 pr-5 transition-colors duration-700 transform bg-indigo-500 hover:bg-blue-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
             START
         </button>
-        <button @click="toggleAddItemModal()"
-                class="p-2 pl-5 pr-5 transition-colors duration-700 transform bg-green-500 hover:bg-green-400 text-gray-100 text-lg rounded-lg focus:border-4 border-indigo-300">
-            Add Category
+        <button
+                @click="toggleReset()"
+                class="p-2 pl-5 pr-5 transition-colors duration-700 transform bg-red-500 hover:bg-red-400 text-gray-100 text-lg rounded-lg focus:border-4 border-red-300">
+            Back
         </button>
     </div>
     <div class="relative z-10" x-show="addItemShow" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -504,6 +546,8 @@
 
         Alpine.data('navigation', () => ({
             categories: [],
+            modes: ['Show Don’t Tell', 'One Syllable'],
+            currentMode: null,
             categoryName: null,
             gameCategory: null,
             gameCategoryID: 0,
@@ -528,6 +572,8 @@
             realTimer: '00:00:00',
             interval: null,
             toGuess: null,
+            itemsToGuess: [],
+            currentIndex: 0,
             successGuess: false,
             teamName: 'KungFu Panda',
             stats: {time: -1, team: null, item: null},
@@ -570,7 +616,11 @@
                 clearInterval(this.interval)
                 this.successGuess = true
                 console.log(this.timer, this.timerCopy)
-                Object.assign(this.stats, {time: this.timer - this.timerCopy, team: this.teamName, item: this.toGuess})
+                Object.assign(this.stats, {
+                    time: this.timer - this.timerCopy,
+                    team: this.teamName,
+                    score: this.currentIndex
+                })
             },
 
             submitScore() {
@@ -578,7 +628,7 @@
                 axios.post('/api/score/', {
                     'name': this.teamName,
                     'time': self.stats.time,
-                    'answer': this.toGuess
+                    'score': this.currentIndex
                 }).then(function (response) {
                     self.toggleReset()
                 }).catch(function (error) {
@@ -604,9 +654,12 @@
                 this.isGameStart = false
                 this.gameEnd = false
                 this.toGuess = null
+                this.itemsToGuess.splice(0, this.itemsToGuess.length)
+                this.currentIndex = 0
                 this.successGuess = false
                 this.timerCopy = 0
                 this.realTimer = '00:00:00'
+                clearInterval(this.interval)
                 Object.assign(this.stats, {time: -1, team: null, item: null})
             },
             toggleEditItemModal(cat = {}) {
@@ -634,7 +687,11 @@
             toggleGameStart() {
                 const self = this
                 axios.get(`/api/item/guess/${parseInt(self.gameCategoryID)}`).then((r) => {
-                    self.toGuess = r.data.name
+                    Array.prototype.splice.apply(self.itemsToGuess, [0, self.itemsToGuess.length].concat(r.data))
+                    if (self.itemsToGuess.length > 0) {
+                        self.toGuess = self.itemsToGuess[0].name
+                        this.currentMode = this.modes[Math.floor(Math.random() * 2)]
+                    }
                 }).catch((e) => {
                     console.log(e);
                 })
@@ -643,8 +700,7 @@
                 this.isGameStart = !this.isGameStart
                 this.interval = setInterval(() => {
                     if (timerCopy <= 0) {
-                        clearInterval(self.interval)
-                        self.gameEnd = true
+                        self.toggleSuccess()
                     } else {
                         self.realTimer = new Date(timerCopy * 1000).toISOString().substr(11, 8)
                         timerCopy--
@@ -658,8 +714,15 @@
                     let item = self.categories.find(cat => cat.id === parseInt(self.gameCategoryID))
                     self.gameCategory = item.name
                 }
-
-
+            },
+            toggleNext() {
+                this.currentIndex++
+                if (this.currentIndex <= this.itemsToGuess.length - 1) {
+                    this.currentMode = this.modes[Math.floor(Math.random() * 2)]
+                    this.toGuess = this.itemsToGuess[this.currentIndex].name
+                } else {
+                    this.toggleSuccess()
+                }
             },
             deleteCategory() {
                 const self = this
