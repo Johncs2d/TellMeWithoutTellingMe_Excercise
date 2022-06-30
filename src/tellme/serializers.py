@@ -60,9 +60,9 @@ class ScoreSerializer(serializers.ModelSerializer):
             'id',
             'time',
             'name',
+            'score',
             'category',
             'category_name',
-            'answer',
             'date_created',
         ]
         extra_kwargs = {

@@ -1,3 +1,4 @@
+from django.db.models import QuerySet
 from django.shortcuts import render
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.generics import get_object_or_404
@@ -95,15 +96,19 @@ class RetrieveItemToGuess(generics.RetrieveAPIView):
         if category != 0:
             queryset = Category.objects.filter(pk=category).first()
         else:
-            queryset = Category.objects.all().order_by('?').first()
+            queryset = Category.objects.all().order_by('?')[:5]
 
         # May raise a permission denied
         self.check_object_permissions(self.request, queryset)
-        return Item.objects.filter(category=queryset).order_by('?').first()
+
+        if isinstance(queryset, QuerySet):
+            return Item.objects.filter(category__in=queryset).order_by('?')
+
+        return Item.objects.filter(category=queryset).order_by('?')
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance)
+        serializer = self.get_serializer(instance, many=True)
         return Response(serializer.data)
 
 class SubmitScore(generics.CreateAPIView):
@@ -113,4 +118,4 @@ class SubmitScore(generics.CreateAPIView):
 class ListScores(generics.ListAPIView):
     permission_classes = (permissions.AllowAny, )
     serializer_class = ScoreSerializer
-    queryset = Score.objects.all()
+    queryset = Score.objects.all().order_by('-date_created')[:15]
