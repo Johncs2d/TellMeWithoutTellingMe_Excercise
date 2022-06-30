@@ -1,6 +1,9 @@
 from rest_framework import status
 from rest_framework.test import APITestCase, APIRequestFactory, APIClient
 # Create your tests here.
+from .models import Category, Item
+
+
 class AccountTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
@@ -12,25 +15,21 @@ class AccountTestCase(APITestCase):
         self.assertEqual(req.status_code, status.HTTP_201_CREATED)
 
     def testUpdateCategory(self):
-        req = self.client.post('/api/category/', {
-            'name': 'Test',
-        }, format='json')
-        self.assertEqual(req.status_code, status.HTTP_201_CREATED)
-
-        req = self.client.patch('/api/category/{}/'.format(req.json()['id']), {
+        instance = Category.objects.create(
+            name = 'Test'
+        )
+        req = self.client.patch('/api/category/{}/'.format(instance.id), {
             'name': 'Test 1',
         }, format='json')
         self.assertEqual(req.json()['name'], 'Test 1')
         self.assertEqual(req.status_code, status.HTTP_200_OK)
 
     def testDeleteCategory(self):
-        req = self.client.post('/api/category/', {
-            'name': 'Animals',
-        }, format='json')
-        self.assertEqual(req.status_code, status.HTTP_201_CREATED)
-
+        instance = Category.objects.create(
+            name = 'Animals'
+        )
         req = self.client.delete('/api/category/remove/',{
-            'id': req.json()['id'],
+            'id': instance.id,
         }, format='json')
 
         self.assertEqual(req.status_code, status.HTTP_204_NO_CONTENT)
@@ -40,116 +39,98 @@ class AccountTestCase(APITestCase):
         self.assertEqual(req.status_code, status.HTTP_200_OK)
 
     def testCreateItem(self):
-
-        req1 = self.client.post('/api/category/', {
-            'name': 'Places',
-        }, format='json')
-        self.assertEqual(req1.status_code, status.HTTP_201_CREATED)
+        instance = Category.objects.create(
+            name = 'Places'
+        )
 
         req = self.client.post('/api/item/', {
             'name': 'Manila',
-            'category': req1.json()['id']
+            'category': instance.id
         }, format='json')
         self.assertEqual(req.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(req.json()['category'], req1.json()['id'])
+        self.assertEqual(req.json()['category'], instance.id)
 
     def testUpdateItem(self):
-        req1 = self.client.post('/api/category/', {
-            'name': 'Places',
-        }, format='json')
-        self.assertEqual(req1.status_code, status.HTTP_201_CREATED)
+        instance = Category.objects.create(
+            name = 'Places'
+        )
+        item_instance = Item.objects.create(
+            name = 'Manila',
+            category=instance
+        )
 
-        req = self.client.post('/api/item/', {
-            'name': 'Manila',
-            'category': req1.json()['id']
-        }, format='json')
-        self.assertEqual(req.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(req.json()['category'], req1.json()['id'])
-
-
-        req = self.client.patch('/api/item/{}/'.format(req.json()['id']), {
+        req = self.client.patch('/api/item/{}/'.format(item_instance.id), {
             'name': 'Manila Zoo',
         }, format='json')
         self.assertEqual(req.json()['name'], 'Manila Zoo')
         self.assertEqual(req.status_code, status.HTTP_200_OK)
 
     def testDeleteItem(self):
-        req1 = self.client.post('/api/category/', {
-            'name': 'Places',
-        }, format='json')
-        self.assertEqual(req1.status_code, status.HTTP_201_CREATED)
+        instance = Category.objects.create(
+            name = 'Places'
+        )
+        Item.objects.create(
+            name = 'Manila',
+            category=instance
+        )
 
-        self.client.post('/api/item/', {
-            'name': 'Manila',
-            'category': req1.json()['id']
-        }, format='json')
-
-        req = self.client.post('/api/item/', {
-            'name': 'Davao',
-            'category': req1.json()['id']
-        }, format='json')
-        self.assertEqual(req.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(req.json()['category'], req1.json()['id'])
+        item2_instance = Item.objects.create(
+            name = 'Davao',
+            category=instance
+        )
 
         req = self.client.delete('/api/item/remove/',{
-            'id': req.json()['id'],
+            'id': item2_instance.id,
         }, format='json')
 
         self.assertEqual(req.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Item.objects.all().count(), 1)
 
     def testRetrieveCategoryItems(self):
-        req1 = self.client.post('/api/category/', {
-            'name': 'Places',
-        }, format='json')
-        self.assertEqual(req1.status_code, status.HTTP_201_CREATED)
+        instance = Category.objects.create(
+            name = 'Places'
+        )
 
-        self.client.post('/api/item/', {
-            'name': 'Manila',
-            'category': req1.json()['id']
-        }, format='json')
+        Item.objects.create(
+            name = 'Manila',
+            category=instance
+        )
 
-        req = self.client.post('/api/item/', {
-            'name': 'Davao',
-            'category': req1.json()['id']
-        }, format='json')
-        self.assertEqual(req.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(req.json()['category'], req1.json()['id'])
+        Item.objects.create(
+            name = 'Davao',
+            category=instance
+        )
 
-        req = self.client.get('/api/item/{}'.format(req1.json()['id']))
+        req = self.client.get('/api/item/{}'.format(instance.id))
         self.assertEqual(req.status_code, status.HTTP_200_OK)
 
     def testRetrieveItemToGuess(self):
-        req1 = self.client.post('/api/category/', {
-            'name': 'Places',
-        }, format='json')
-        self.assertEqual(req1.status_code, status.HTTP_201_CREATED)
+        instance = Category.objects.create(
+            name = 'Places'
+        )
 
-        self.client.post('/api/item/', {
-            'name': 'Manila',
-            'category': req1.json()['id']
-        }, format='json')
+        Item.objects.create(
+            name = 'Manila',
+            category=instance
+        )
 
-        req = self.client.post('/api/item/', {
-            'name': 'Davao',
-            'category': req1.json()['id']
-        }, format='json')
-        self.assertEqual(req.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(req.json()['category'], req1.json()['id'])
+        Item.objects.create(
+            name = 'Davao',
+            category=instance
+        )
 
-        req = self.client.get('/api/item/guess/{}'.format(req1.json()['id']))
+        req = self.client.get('/api/item/guess/{}'.format(instance.id))
         self.assertEqual(req.status_code, status.HTTP_200_OK)
 
     def testSubmitScore(self):
-        req1 = self.client.post('/api/category/', {
-            'name': 'Places',
-        }, format='json')
-        self.assertEqual(req1.status_code, status.HTTP_201_CREATED)
-
+        instance = Category.objects.create(
+            name = 'Places'
+        )
         req = self.client.post('/api/score/', {
-            'category': req1.json()['id'],
+            'category': instance.id,
             'name': 'JAB',
             'time': 10,
             'answer': 'Dog'
         }, format='json')
-        print(req.json())
-        self.assertEqual(req1.status_code, status.HTTP_201_CREATED)
+
+        self.assertEqual(req.status_code, status.HTTP_201_CREATED)
