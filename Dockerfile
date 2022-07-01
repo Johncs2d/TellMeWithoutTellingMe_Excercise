@@ -47,4 +47,4 @@ ENV PYTHONUNBUFFERED 1
 
 RUN ls -la
 
-CMD [ "python", "manage.py", "makemigrations", "&&", "python", "manage.py", "migrate" ]
+CMD [ "python", "manage.py", "makemigrations", "&&", "python", "manage.py", "migrate"]
