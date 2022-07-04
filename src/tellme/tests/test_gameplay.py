@@ -4,6 +4,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 import factory
+from django.urls import reverse
 from rest_framework import status, permissions
 from rest_framework.test import APITestCase, APIClient, APIRequestFactory
 
@@ -33,21 +34,24 @@ class GamePlayTestCase(APITestCase):
     def test_retrieve_item_to_guess_ok(self):
         category = CategoryFactory(name='Jobs')
         items = create_category_items(50, category=category)
-
-        req = self.client.get('/api/item/guess/{}'.format(category.id))
+        url = reverse('tellme:RetrieveItemToGuess', kwargs={'id': category.id})
+        req = self.client.get(url)
 
         self.assertEqual(req.status_code, status.HTTP_200_OK)
         self.assertEqual(len(req.json()), len(items))
 
         create_category_items(15, name=factory.Faker('name'), category=CategoryFactory(name='People Name'))
 
-        req = self.client.get('/api/item/guess/{}'.format(0))
+        url = reverse('tellme:RetrieveItemToGuess', kwargs={'id': 0})
+
+        req = self.client.get(url)
 
         self.assertEqual(req.status_code, status.HTTP_200_OK)
         self.assertEqual(len(req.json()), 65)
 
         category_stub = CategoryFactory.stub(id=random.randint(100, 1000))
-        req = self.client.get('/api/item/guess/{}'.format(category_stub.id))
+        url = reverse('tellme:RetrieveItemToGuess', kwargs={'id': category_stub.id})
+        req = self.client.get(url)
         self.assertEqual(len(req.json()), 0)
 
     def test_submit_score_ok(self):
@@ -64,13 +68,14 @@ class GamePlayTestCase(APITestCase):
 
     def test_retrieve_score_ok(self):
         ScoreFactory.create_batch(15)
-
-        req = self.client.get('/api/scores')
+        url = reverse('tellme:ListScores')
+        req = self.client.get(url)
         self.assertEqual(len(req.json()), 15)
         self.assertEqual(req.status_code, status.HTTP_200_OK)
 
-        with patch.object(ListScores, "get_queryset", return_value=Score.objects.all().order_by('-date_created')[:1]) as mock_method:
-            req = self.client.get('/api/scores')
+        with patch.object(ListScores, "get_queryset",
+                          return_value=Score.objects.all().order_by('-date_created')[:1]) as mock_method:
+            req = self.client.get(url)
             self.assertEqual(len(req.json()), 1)
 
             self.assertEqual(req.status_code, status.HTTP_200_OK)

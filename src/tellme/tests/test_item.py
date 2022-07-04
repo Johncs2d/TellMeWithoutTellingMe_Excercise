@@ -2,6 +2,7 @@ import functools
 from unittest.mock import patch, Mock
 
 import factory
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient, APIRequestFactory
 
@@ -32,8 +33,8 @@ class CategoryItemTestCase(APITestCase):
 
     def test_create_category_item_ok(self):
         category = CategoryFactory()
-
-        req = self.client.post('/api/item/', {
+        url = reverse('tellme:CreateItem')
+        req = self.client.post(url, {
             'name': 'Manila',
             'category': category.id
         }, format='json')
@@ -45,9 +46,9 @@ class CategoryItemTestCase(APITestCase):
 
     def test_create_category_item_not_ok(self):
         category = CategoryFactory()
-
-        post = functools.partial(self.client.post, path='/api/item/', data={'category': category.id}, format='json')
-        get = functools.partial(self.client.get, path='/api/item/', data={'description': fake.text()}, format='json')
+        url = reverse('tellme:CreateItem')
+        post = functools.partial(self.client.post, path=url, data={'category': category.id}, format='json')
+        get = functools.partial(self.client.get, path=url, data={'description': fake.text()}, format='json')
 
         self.assertEqual(post().status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(post(data={'category': 0, 'name': 'Manila'}).status_code, status.HTTP_400_BAD_REQUEST)
@@ -56,8 +57,8 @@ class CategoryItemTestCase(APITestCase):
 
     def test_update_category_item_ok(self):
         item = CategoryItemFactory()
-
-        req = self.client.patch('/api/item/{}/'.format(item.id), {
+        url = reverse('tellme:UpdateItem', kwargs={'id': item.id})
+        req = self.client.patch(url, {
             'name': 'Manila Zoo',
         }, format='json')
         self.assertEqual(req.json()['name'], 'Manila Zoo')
@@ -67,10 +68,10 @@ class CategoryItemTestCase(APITestCase):
     def test_update_category_item_not_ok(self):
         item = CategoryItemFactory()
         item_stub = CategoryItemFactory.stub(id=0)
-
-        patch = functools.partial(self.client.patch, path='/api/item/{}/'.format(item.id), data={'name': 'Manila Zoo'},
+        url = reverse('tellme:UpdateItem', kwargs={'id': item.id})
+        patch = functools.partial(self.client.patch, path=url, data={'name': 'Manila Zoo'},
                                   format='json')
-        get = functools.partial(self.client.get, path='/api/item/{}/'.format(item.id), data={'name': 'Manila Zoo'},
+        get = functools.partial(self.client.get, path=url, data={'name': 'Manila Zoo'},
                                 format='json')
 
         self.assertEqual(patch(path='/api/items/').status_code, status.HTTP_404_NOT_FOUND)
@@ -81,14 +82,15 @@ class CategoryItemTestCase(APITestCase):
         category = CategoryFactory()
         items = create_category_items(10, category=category)
         self.assertEqual(Item.objects.all().count(), 10)
-
-        req = self.client.delete('/api/item/remove/', {'id': items[0].id, }, format='json')
+        url = reverse('tellme:DeleteItem')
+        req = self.client.delete(url, {'id': items[0].id, }, format='json')
         self.assertEqual(req.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Item.objects.all().count(), 9)
 
     def test_delete_category_item_not_ok(self):
-        delete = functools.partial(self.client.delete, path='/api/item/remove/', data={'id': 0}, format='json')
-        get = functools.partial(self.client.get, path='/api/item/remove/', data={'id': 0}, format='json')
+        url = reverse('tellme:DeleteItem')
+        delete = functools.partial(self.client.delete, path=url, data={'id': 0}, format='json')
+        get = functools.partial(self.client.get, path=url, data={'id': 0}, format='json')
 
         self.assertEqual(delete().status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(delete(path='/api/item/remove').status_code, status.HTTP_301_MOVED_PERMANENTLY)
@@ -97,15 +99,15 @@ class CategoryItemTestCase(APITestCase):
     def test_category_item_retrieve_ok(self):
         category = CategoryFactory()
         items = create_category_items(10, category=category)
-
-        req = self.client.get('/api/item/{}'.format(category.id))
+        url = reverse('tellme:RetrieveCategoryItems', kwargs={'id': category.id})
+        req = self.client.get(url)
         self.assertEqual(req.status_code, status.HTTP_200_OK)
         self.assertEqual(len(items), len(req.json()))
 
         with patch.object(RetrieveCategoryItems, "get_object") as mock_method:
             factory = APIRequestFactory()
             view = RetrieveCategoryItems.as_view(queryset=Category.objects.filter(pk=category.id))
-            request = factory.get('/api/item/{}/'.format(category.id), id=category.id)
+            request = factory.get(url, id=category.id)
             response = view(request, id=category.id)
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -116,7 +118,7 @@ class CategoryItemTestCase(APITestCase):
         create_category_items(10, category=category)
 
         item_stub = CategoryItemFactory.stub(id=0)
-
-        req = self.client.get('/api/item/{}'.format(item_stub.id))
+        url = reverse('tellme:RetrieveCategoryItems', kwargs={'id': item_stub.id})
+        req = self.client.get(url)
 
         self.assertEqual(req.status_code, status.HTTP_404_NOT_FOUND)
