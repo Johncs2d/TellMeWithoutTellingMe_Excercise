@@ -1,10 +1,13 @@
 import functools
+from unittest.mock import patch, Mock
 
 import factory
 from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase, APIClient, APIRequestFactory
 
-from tellme.models import Item
+from tellme.models import Item, Category
+
+from tellme.views import RetrieveCategoryItems
 from . import CategoryFactory
 from faker import Faker
 
@@ -57,7 +60,6 @@ class CategoryItemTestCase(APITestCase):
         req = self.client.patch('/api/item/{}/'.format(item.id), {
             'name': 'Manila Zoo',
         }, format='json')
-
         self.assertEqual(req.json()['name'], 'Manila Zoo')
         self.assertEqual(Item.objects.get(pk=item.id).name, 'Manila Zoo')
         self.assertEqual(req.status_code, status.HTTP_200_OK)
@@ -99,6 +101,15 @@ class CategoryItemTestCase(APITestCase):
         req = self.client.get('/api/item/{}'.format(category.id))
         self.assertEqual(req.status_code, status.HTTP_200_OK)
         self.assertEqual(len(items), len(req.json()))
+
+        with patch.object(RetrieveCategoryItems, "get_object") as mock_method:
+            factory = APIRequestFactory()
+            view = RetrieveCategoryItems.as_view(queryset=Category.objects.filter(pk=category.id))
+            request = factory.get('/api/item/{}/'.format(category.id), id=category.id)
+            response = view(request, id=category.id)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            mock_method.assert_called()
 
     def test_category_item_retrieve_not_ok(self):
         category = CategoryFactory()

@@ -1,14 +1,17 @@
 import functools
 import random
 from datetime import timedelta
+from unittest.mock import patch
 
 import factory
-from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+from rest_framework import status, permissions
+from rest_framework.test import APITestCase, APIClient, APIRequestFactory
 
 from faker import Faker
 
 from tellme.models import Score
+
+from tellme.views import ListScores
 from . import CategoryFactory, create_category_items
 
 fake = Faker()
@@ -64,3 +67,11 @@ class GamePlayTestCase(APITestCase):
 
         req = self.client.get('/api/scores')
         self.assertEqual(len(req.json()), 15)
+        self.assertEqual(req.status_code, status.HTTP_200_OK)
+
+        with patch.object(ListScores, "get_queryset", return_value=Score.objects.all().order_by('-date_created')[:1]) as mock_method:
+            req = self.client.get('/api/scores')
+            self.assertEqual(len(req.json()), 1)
+
+            self.assertEqual(req.status_code, status.HTTP_200_OK)
+            mock_method.assert_called()
