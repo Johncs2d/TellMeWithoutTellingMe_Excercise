@@ -1,5 +1,5 @@
 import functools
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, MagicMock
 
 import factory
 from django.urls import reverse
@@ -106,9 +106,9 @@ class CategoryItemTestCase(APITestCase):
         self.assertEqual(req.status_code, status.HTTP_200_OK)
         self.assertEqual(len(items), len(req.json()))
 
-        with patch.object(RetrieveCategoryItems, "get_object") as mock_method:
+        with patch.object(RetrieveCategoryItems, "get_queryset", return_value=Category.objects.filter(pk=category.id)) as mock_method:
             factory = APIRequestFactory()
-            view = RetrieveCategoryItems.as_view(queryset=Category.objects.filter(pk=category.id))
+            view = RetrieveCategoryItems.as_view()
             request = factory.get(url, id=category.id)
             response = view(request, id=category.id)
 
