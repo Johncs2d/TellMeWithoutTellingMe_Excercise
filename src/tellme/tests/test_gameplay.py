@@ -34,7 +34,8 @@ class GamePlayTestCase(APITestCase):
     def test_retrieve_item_to_guess_ok(self):
         category = CategoryFactory(name='Jobs')
         items = create_category_items(50, category=category)
-        url = reverse('tellme:RetrieveItemToGuess', kwargs={'id': category.id})
+        path_name = 'tellme:RetrieveItemToGuess'
+        url = reverse(path_name, kwargs={'id': category.id})
         req = self.client.get(url)
 
         self.assertEqual(req.status_code, status.HTTP_200_OK)
@@ -42,7 +43,7 @@ class GamePlayTestCase(APITestCase):
 
         create_category_items(15, name=factory.Faker('name'), category=CategoryFactory(name='People Name'))
 
-        url = reverse('tellme:RetrieveItemToGuess', kwargs={'id': 0})
+        url = reverse(path_name, kwargs={'id': 0})
 
         req = self.client.get(url)
 
@@ -50,7 +51,7 @@ class GamePlayTestCase(APITestCase):
         self.assertEqual(len(req.json()), 65)
 
         category_stub = CategoryFactory.stub(id=random.randint(100, 1000))
-        url = reverse('tellme:RetrieveItemToGuess', kwargs={'id': category_stub.id})
+        url = reverse(path_name, kwargs={'id': category_stub.id})
         req = self.client.get(url)
         self.assertEqual(len(req.json()), 0)
 

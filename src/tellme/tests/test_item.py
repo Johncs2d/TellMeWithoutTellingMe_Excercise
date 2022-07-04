@@ -58,20 +58,22 @@ class CategoryItemTestCase(APITestCase):
     def test_update_category_item_ok(self):
         item = CategoryItemFactory()
         url = reverse('tellme:UpdateItem', kwargs={'id': item.id})
+        name = 'Manila Zoo'
         req = self.client.patch(url, {
-            'name': 'Manila Zoo',
+            'name': name,
         }, format='json')
-        self.assertEqual(req.json()['name'], 'Manila Zoo')
-        self.assertEqual(Item.objects.get(pk=item.id).name, 'Manila Zoo')
+        self.assertEqual(req.json()['name'], name)
+        self.assertEqual(Item.objects.get(pk=item.id).name, name)
         self.assertEqual(req.status_code, status.HTTP_200_OK)
 
     def test_update_category_item_not_ok(self):
+        name = 'Manila Zoo'
         item = CategoryItemFactory()
         item_stub = CategoryItemFactory.stub(id=0)
         url = reverse('tellme:UpdateItem', kwargs={'id': item.id})
-        patch = functools.partial(self.client.patch, path=url, data={'name': 'Manila Zoo'},
+        patch = functools.partial(self.client.patch, path=url, data={'name': name},
                                   format='json')
-        get = functools.partial(self.client.get, path=url, data={'name': 'Manila Zoo'},
+        get = functools.partial(self.client.get, path=url, data={'name': name},
                                 format='json')
 
         self.assertEqual(patch(path='/api/items/').status_code, status.HTTP_404_NOT_FOUND)
