@@ -2,7 +2,7 @@ import functools
 from unittest.mock import MagicMock, patch
 
 from django.urls import reverse
-from rest_framework import status, permissions
+from rest_framework import status, permissions, serializers
 from rest_framework.test import APITestCase, APIClient, APIRequestFactory
 
 from tellme.models import Category
@@ -10,6 +10,8 @@ import factory
 from faker import Faker
 
 from tellme.views import CreateCategory
+
+from tellme.serializers import CategorySerializer
 
 fake = Faker()
 
@@ -47,8 +49,15 @@ class CategoryTestCase(APITestCase):
         self.assertEqual(post(path='/api/categories/').status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(get().status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
+        error = serializers.ValidationError({'message': 'Error'})
+        error.status_code = status.HTTP_406_NOT_ACCEPTABLE
+
+        with patch.object(CategorySerializer, "create", side_effect=error):
+            req = self.client.post(url, data={'description': fake.text(), 'name': fake.name()}, format='json')
+            self.assertEqual(req.status_code, status.HTTP_406_NOT_ACCEPTABLE)
+
         view = CreateCategory.as_view(permission_classes=(permissions.IsAuthenticated,))
-        request = self.factory.post(url, data={'description': fake.text(), 'name': 'Test'})
+        request = self.factory.post(url, data={'description': fake.text(), 'name': fake.name()})
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
