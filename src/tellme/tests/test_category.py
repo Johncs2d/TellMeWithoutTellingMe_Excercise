@@ -1,12 +1,15 @@
 import functools
+from unittest.mock import MagicMock, patch
 
 from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+from rest_framework import status, permissions
+from rest_framework.test import APITestCase, APIClient, APIRequestFactory
 
 from tellme.models import Category
 import factory
 from faker import Faker
+
+from tellme.views import CreateCategory
 
 fake = Faker()
 
@@ -19,10 +22,10 @@ class CategoryFactory(factory.django.DjangoModelFactory):
     description = factory.Faker('text')
 
 
-
 class CategoryTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
+        self.factory = APIRequestFactory()
 
     def test_category_creation_ok(self):
         url = reverse('tellme:CreateCategory')
@@ -44,6 +47,11 @@ class CategoryTestCase(APITestCase):
         self.assertEqual(post(path='/api/categories/').status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(get().status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
+        view = CreateCategory.as_view(permission_classes=(permissions.IsAuthenticated,))
+        request = self.factory.post(url, data={'description': fake.text(), 'name': 'Test'})
+        response = view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_category_retrieve_ok_200(self):
         categories = CategoryFactory.create_batch(10)
 
@@ -52,9 +60,8 @@ class CategoryTestCase(APITestCase):
         self.assertEqual(len(categories), len(req.json()))
 
     def test_category_update_category_name_ok(self):
-
         category = CategoryFactory()
-        url = reverse('tellme:UpdateCategory', kwargs={'id':category.id})
+        url = reverse('tellme:UpdateCategory', kwargs={'id': category.id})
         req = self.client.patch(url, {
             'name': 'People',
         }, format='json')

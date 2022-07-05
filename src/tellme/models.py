@@ -1,6 +1,11 @@
 from django.db import models
 from django.db.models.manager import Manager
 # Create your models here.
+from tellme.managers import ScoreManager
+
+from tellme.queryset import ScoreQuerySet
+
+
 class Category(models.Model):
     name = models.CharField(max_length=50, null=False, blank=False, help_text="Category Name")
     description = models.TextField(null=True, blank=True)
@@ -22,4 +27,4 @@ class Score(models.Model):
     score = models.IntegerField(default=0, blank=True)
     category = models.ForeignKey(to=Category, on_delete=models.SET_NULL, blank=True, null=True, help_text="Category Selected")
     date_created = models.DateTimeField(auto_now_add=True, editable=False)
-    objects = Manager()
+    objects = ScoreManager.from_queryset(ScoreQuerySet)()

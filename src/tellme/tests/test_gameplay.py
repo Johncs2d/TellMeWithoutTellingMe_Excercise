@@ -74,8 +74,7 @@ class GamePlayTestCase(APITestCase):
         self.assertEqual(len(req.json()), 15)
         self.assertEqual(req.status_code, status.HTTP_200_OK)
 
-        with patch.object(ListScores, "get_queryset",
-                          return_value=Score.objects.all().order_by('-date_created')[:1]) as mock_method:
+        with patch.object(ListScores, "get_queryset", return_value=Score.objects.fetch_latest(1)) as mock_method:
             req = self.client.get(url)
             self.assertEqual(len(req.json()), 1)
 

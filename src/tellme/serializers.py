@@ -14,6 +14,7 @@ class CategorySerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'id': {'read_only': True},
+            'image_link': {'required': False},
         }
 
     def create(self, validated_data):

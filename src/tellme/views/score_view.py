@@ -22,7 +22,7 @@ class SubmitScore(generics.CreateAPIView):
 class ListScores(generics.ListAPIView):
     def __init__(self,
                  serializer_class: serializers.ModelSerializer = ScoreSerializer,
-                 queryset: QuerySet = Score.objects.all().order_by('-date_created')[:15],
+                 queryset: QuerySet = Score.objects.fetch_latest(15),
                  permission_classes: Union[tuple, list] = (permissions.AllowAny,),
                  **kwargs
                  ):
