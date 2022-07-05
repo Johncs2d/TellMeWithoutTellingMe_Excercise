@@ -9,7 +9,7 @@ from tellme.models import Category
 import factory
 from faker import Faker
 
-from tellme.views import CreateCategory
+from tellme.views import CreateCategory, DeleteCategory
 
 from tellme.serializers import CategorySerializer
 
@@ -49,12 +49,13 @@ class CategoryTestCase(APITestCase):
         self.assertEqual(post(path='/api/categories/').status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(get().status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-        error = serializers.ValidationError({'message': 'Error'})
+        error = serializers.ValidationError({'message': 'Test Mock Error Raised'})
         error.status_code = status.HTTP_406_NOT_ACCEPTABLE
 
         with patch.object(CategorySerializer, "create", side_effect=error):
             req = self.client.post(url, data={'description': fake.text(), 'name': fake.name()}, format='json')
             self.assertEqual(req.status_code, status.HTTP_406_NOT_ACCEPTABLE)
+            self.assertEqual(req.json(), {'message': 'Test Mock Error Raised'})
 
         view = CreateCategory.as_view(permission_classes=(permissions.IsAuthenticated,))
         request = self.factory.post(url, data={'description': fake.text(), 'name': fake.name()})
@@ -95,6 +96,20 @@ class CategoryTestCase(APITestCase):
         self.assertEqual(delete().status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(delete(path='/api/category/remove').status_code, status.HTTP_301_MOVED_PERMANENTLY)
         self.assertEqual(get().status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        category = CategoryFactory()
+        self.assertEqual(Category.objects.all().count(), 1)
+
+        with patch.object(DeleteCategory, "get_queryset", return_value=Category.objects.none()) as mock_method:
+            req_should_return_404 = self.client.delete(path=url, data={'id': category.id}, format='json')
+            self.assertEqual(req_should_return_404.status_code, status.HTTP_404_NOT_FOUND)
+            self.assertEqual(Category.objects.all().count(), 1)
+            mock_method.assert_called()
+
+            view = DeleteCategory.as_view(permission_classes=(permissions.IsAuthenticated,))
+            request = self.factory.delete(url, data={'id': category.id}, format='json')
+            response_should_return_403 = view(request)
+            self.assertEqual(response_should_return_403.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_category_destroy_ok(self):
         category = CategoryFactory()

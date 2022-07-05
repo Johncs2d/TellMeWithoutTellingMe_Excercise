@@ -50,7 +50,7 @@ class DeleteCategory(generics.DestroyAPIView):
         return self.queryset
 
     def get_object(self):
-        return get_object_or_404(self.queryset, pk=self.request.data.get('id', None))
+        return get_object_or_404(self.get_queryset(), pk=self.request.data.get('id', None))
 
 
 class RetrieveCategories(generics.ListAPIView):
