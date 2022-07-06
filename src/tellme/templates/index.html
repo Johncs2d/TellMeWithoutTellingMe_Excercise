@@ -7,7 +7,9 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js" integrity="sha512-odNmoc1XJy5x1TMVMdC7EMs3IVdItLPlCeL5vSUPN2llYKMJ2eByTTAIiiuqLg+GdNr9hF6z81p27DArRFKT7A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"
+            integrity="sha512-odNmoc1XJy5x1TMVMdC7EMs3IVdItLPlCeL5vSUPN2llYKMJ2eByTTAIiiuqLg+GdNr9hF6z81p27DArRFKT7A=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body class="font-nunito antialiased bg-gray-100 text-gray-900 my-16 flex items-center justify-center">
 
@@ -401,7 +403,7 @@
                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                        required>
                             </div>
-<div class="mb-6">
+                            <div class="mb-6">
                                 <label for="image_link"
                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Category
                                     Image Link</label>
@@ -551,11 +553,29 @@
                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                        required>
                             </div>
+
                             <div class="mb-6">
                                 <button type="submit"
                                         @click.prevent="insertItem()"
                                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                     Add
+                                </button>
+
+
+                                <div class="mb-6 mt-5">
+                                    <label for="itemFile"
+                                           class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Upload
+                                        CSV of Item Name</label>
+                                    <input type="file" id="itemFile"
+                                           x-on:change="itemFile = Object.values($event.target.files)"
+                                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                           required>
+                                </div>
+
+                                <button type="submit"
+                                        @click.prevent="uploadItem()"
+                                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                    Upload
                                 </button>
                             </div>
 
@@ -622,6 +642,7 @@
             categoryName: null,
             gameCategory: null,
             gameCategoryID: 0,
+            itemFile: null,
             isScore: false,
             gameMode: null,
             categoryDescription: null,
@@ -683,7 +704,29 @@
                     })
                 }
             },
+            uploadItem() {
+                if (this.itemFile != null && this.itemFile[0].type === 'text/csv') {
+                    const self = this
+                    var formData = new FormData();
+                    formData.append("file", this.itemFile[0]);
+                    formData.append("category", this.selectedCategory.id);
+                    axios.post('/api/item/upload/', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }).then(function (response) {
+                        self.getItem(self.selectedCategory.id)
+                        self.itemFile = null
+                        alert("Uploaded")
+                    }).catch(function (error) {
+                        console.log(error)
+                    });
+                }
+                if(this.itemFile == null){
+                    console.log("Select a proper CSV FILE")
+                }
 
+            },
             toggleSuccess() {
                 this.successGuess = true
                 clearInterval(this.interval)
@@ -837,13 +880,16 @@
                 this.toggleAddItemModal()
             },
             getItem(id) {
-                const self = this
+                if(id != null){
+                                    const self = this
                 axios.get(`/api/item/${id}`).then((r) => {
                     console.log(r)
                     Array.prototype.splice.apply(self.categoryItems, [0, self.categoryItems.length].concat(r.data))
                 }).catch((e) => {
                     console.log(e);
                 })
+                }
+
             },
             insertItem() {
                 if (this.itemName == null) {
