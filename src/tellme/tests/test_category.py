@@ -72,13 +72,13 @@ class CategoryTestCase(APITestCase):
 
     def test_category_update_category_name_not_ok(self):
         category = CategoryFactory()
-
-        url = reverse('tellme:UpdateCategory', kwargs={'id': 0})
+        url_name = 'tellme:UpdateCategory'
+        url = reverse(url_name, kwargs={'id': 0})
 
         request_should_return_404 = self.client.patch(path=url, data={'name': 'People', }, format='json')
-
+        url = reverse(url_name, kwargs={'id': category.id})
         with patch.object(UpdateCategory, "get_queryset", return_value=Category.objects.none()) as mock_method:
-            request_2_should_return_404 = self.client.patch(path=reverse('tellme:UpdateCategory', kwargs={'id': 0}), data={'name': 'People', }, format='json')
+            request_2_should_return_404 = self.client.patch(path=url, data={'name': 'People', }, format='json')
 
         view = UpdateCategory.as_view(permission_classes=(permissions.IsAuthenticated,))
         request = self.factory.patch(url, data={'id': category.id}, format='json')
@@ -92,13 +92,14 @@ class CategoryTestCase(APITestCase):
 
     def test_category_update_category_name_should_return_200(self):
         category = CategoryFactory.create_batch(2)
-        url = reverse('tellme:UpdateCategory', kwargs={'id': category[0].id})
+        url_name = 'tellme:UpdateCategory'
+        url = reverse(url_name, kwargs={'id': category[0].id})
         request_1 = self.client.patch(url, {'name': 'People'}, format='json')
 
         user = User.objects.create_user('jab', password='test_password')
         view = UpdateCategory.as_view(permission_classes=(permissions.IsAuthenticated,))
 
-        url = reverse('tellme:UpdateCategory', kwargs={'id': category[-1].id})
+        url = reverse(url_name, kwargs={'id': category[-1].id})
         request = self.factory.patch(url, data={'name': 'People 2'}, format='json')
         force_authenticate(request, user=user)
         second_request = view(request, id=category[-1].id)
